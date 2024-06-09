@@ -1,9 +1,10 @@
-import { Chat } from "@/components/Chat/Chat";
-import { Footer } from "@/components/Layout/Footer";
-import { Navbar } from "@/components/Layout/Navbar";
-import { Message } from "@/types";
-import Head from "next/head";
-import { useEffect, useRef, useState } from "react";
+import { Chat } from '@/components/Chat/Chat';
+import { Footer } from '@/components/Layout/Footer';
+import { Navbar } from '@/components/Layout/Navbar';
+import { Message } from '@/types';
+import { OpenAIStream } from '@/utils';
+import Head from 'next/head';
+import { useEffect, useRef, useState } from 'react';
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -12,7 +13,7 @@ export default function Home() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleSend = async (message: Message) => {
@@ -21,28 +22,67 @@ export default function Home() {
     setMessages(updatedMessages);
     setLoading(true);
 
-    const response = await fetch("/api/chat", {
-      method: "POST",
+    // let response;
+    // const stream = false;
+    // if (stream) {
+    //   // response = new Response(await OpenAIStream(updatedMessages));
+    // } else {
+    //   // response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://cloud-fgksoy3vwq-uc.a.run.app/ask', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json"
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': 'https://cloud-fgksoy3vwq-uc.a.run.app',
       },
+      // mode: 'no-cors',
       body: JSON.stringify({
-        messages: updatedMessages
-      })
+        // model: 'gpt-3.5-turbo',
+        // messages: updatedMessages,
+        question: message.content,
+        // max_tokens: 800,
+        // temperature: 0.0,
+        // stream: false,
+      }),
     });
+    // }
 
-    if (!response.ok) {
-      setLoading(false);
-      throw new Error(response.statusText);
-    }
+    // debugger;
+    // if (!response.ok) {
+    //   setLoading(false);
+    //   throw new Error(response.statusText);
+    // }
 
-    const data = response.body;
+    // let data;
+    // if (stream) data = response.body;
+    // else data = await response.json();
+    // data.choices[0].message.content;
+    const data = await response.json();
 
     if (!data) {
       return;
     }
 
     setLoading(false);
+    // console.log(data.choices[0].message.content);
+    // if (!stream) {
+    setMessages((messages) => {
+      // const lastMessage = messages[messages.length - 1];
+      // const updatedMessage = {
+      //   ...lastMessage,
+      //   content: data.choices[0].message.content,
+      // };
+      // return [...messages.slice(0, -1), updatedMessage];
+      return [
+        ...messages,
+        {
+          role: 'assistant',
+          // content: data.choices[0].message.content,
+          content: data.answer,
+        },
+      ];
+    });
+    return;
+    // }
 
     const reader = data.getReader();
     const decoder = new TextDecoder();
@@ -53,22 +93,23 @@ export default function Home() {
       const { value, done: doneReading } = await reader.read();
       done = doneReading;
       const chunkValue = decoder.decode(value);
+      console.log('start', chunkValue);
 
       if (isFirst) {
         isFirst = false;
         setMessages((messages) => [
           ...messages,
           {
-            role: "assistant",
-            content: chunkValue
-          }
+            role: 'assistant',
+            content: chunkValue,
+          },
         ]);
       } else {
         setMessages((messages) => {
           const lastMessage = messages[messages.length - 1];
           const updatedMessage = {
             ...lastMessage,
-            content: lastMessage.content + chunkValue
+            content: lastMessage.content + chunkValue,
           };
           return [...messages.slice(0, -1), updatedMessage];
         });
@@ -79,9 +120,9 @@ export default function Home() {
   const handleReset = () => {
     setMessages([
       {
-        role: "assistant",
-        content: `Hi there! I'm Chatbot UI, an AI assistant. I can help you with things like answering questions, providing information, and helping with tasks. How can I help you?`
-      }
+        role: 'assistant',
+        content: `I am a movie trailer chatbot. What questions do you have?`,
+      },
     ]);
   };
 
@@ -92,9 +133,9 @@ export default function Home() {
   useEffect(() => {
     setMessages([
       {
-        role: "assistant",
-        content: `Hi there! I'm Chatbot UI, an AI assistant. I can help you with things like answering questions, providing information, and helping with tasks. How can I help you?`
-      }
+        role: 'assistant',
+        content: `I am a movie trailer chatbot. What questions do you have?`,
+      },
     ]);
   }, []);
 
@@ -106,14 +147,8 @@ export default function Home() {
           name="description"
           content="A simple chatbot starter kit for OpenAI's chat model using Next.js, TypeScript, and Tailwind CSS."
         />
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1"
-        />
-        <link
-          rel="icon"
-          href="/favicon.ico"
-        />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <div className="flex flex-col h-screen">

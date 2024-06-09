@@ -1,42 +1,60 @@
-import { Message, OpenAIModel } from "@/types";
-import { createParser, ParsedEvent, ReconnectInterval } from "eventsource-parser";
+import { Message, OpenAIModel } from '@/types';
+import {
+  createParser,
+  ParsedEvent,
+  ReconnectInterval,
+} from 'eventsource-parser';
 
 export const OpenAIStream = async (messages: Message[]) => {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
-    },
-    method: "POST",
-    body: JSON.stringify({
-      model: OpenAIModel.DAVINCI_TURBO,
-      messages: [
-        {
-          role: "system",
-          content: `You are a helpful, friendly, assistant.`
-        },
-        ...messages
-      ],
-      max_tokens: 800,
-      temperature: 0.0,
-      stream: true
-    })
-  });
+  const lastMessage = messages[messages.length - 1];
+  const body = { question: lastMessage.content };
 
-  if (res.status !== 200) {
-    throw new Error("OpenAI API returned an error");
+  return null;
+
+  // if (res.status !== 200) {
+  //   throw new Error('OpenAI API returned an error');
+  // }
+
+  // const stream = true
+  // let data
+  // if (stream) data = res.body;
+  // // else data = await response.json();
+  // // data.choices[0].message.content;
+
+  // if (!data) {
+  //   return;
+  // }
+
+  // console.log(data.choices[0].message.content);
+  if (!stream) {
+    setMessages((messages) => {
+      // const lastMessage = messages[messages.length - 1];
+      // const updatedMessage = {
+      //   ...lastMessage,
+      //   content: data.choices[0].message.content,
+      // };
+      // return [...messages.slice(0, -1), updatedMessage];
+      return [
+        ...messages,
+        {
+          role: 'assistant',
+          content: data.choices[0].message.content,
+        },
+      ];
+    });
+    return;
   }
 
   const stream = new ReadableStream({
     async start(controller) {
       const onParse = (event: ParsedEvent | ReconnectInterval) => {
-        if (event.type === "event") {
+        if (event.type === 'event') {
           const data = event.data;
 
-          if (data === "[DONE]") {
+          if (data === '[DONE]') {
             controller.close();
             return;
           }
@@ -57,7 +75,7 @@ export const OpenAIStream = async (messages: Message[]) => {
       for await (const chunk of res.body as any) {
         parser.feed(decoder.decode(chunk));
       }
-    }
+    },
   });
 
   return stream;

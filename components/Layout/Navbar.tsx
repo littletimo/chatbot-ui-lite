@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC } from 'react';
 
 export const Navbar: FC = () => {
   return (
@@ -8,7 +8,7 @@ export const Navbar: FC = () => {
           className="ml-2 hover:opacity-50"
           href="https://code-scaffold.vercel.app"
         >
-          Chatbot UI
+          Trailer-GPT 🎬
         </a>
       </div>
     </div>
