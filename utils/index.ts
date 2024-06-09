@@ -29,54 +29,54 @@ export const OpenAIStream = async (messages: Message[]) => {
   // }
 
   // console.log(data.choices[0].message.content);
-  if (!stream) {
-    setMessages((messages) => {
-      // const lastMessage = messages[messages.length - 1];
-      // const updatedMessage = {
-      //   ...lastMessage,
-      //   content: data.choices[0].message.content,
-      // };
-      // return [...messages.slice(0, -1), updatedMessage];
-      return [
-        ...messages,
-        {
-          role: 'assistant',
-          content: data.choices[0].message.content,
-        },
-      ];
-    });
-    return;
-  }
+  // if (!stream) {
+  //   setMessages((messages) => {
+  //     // const lastMessage = messages[messages.length - 1];
+  //     // const updatedMessage = {
+  //     //   ...lastMessage,
+  //     //   content: data.choices[0].message.content,
+  //     // };
+  //     // return [...messages.slice(0, -1), updatedMessage];
+  //     return [
+  //       ...messages,
+  //       {
+  //         role: 'assistant',
+  //         content: data.choices[0].message.content,
+  //       },
+  //     ];
+  //   });
+  //   return;
+  // }
 
-  const stream = new ReadableStream({
-    async start(controller) {
-      const onParse = (event: ParsedEvent | ReconnectInterval) => {
-        if (event.type === 'event') {
-          const data = event.data;
+  // const stream = new ReadableStream({
+  //   async start(controller) {
+  //     const onParse = (event: ParsedEvent | ReconnectInterval) => {
+  //       if (event.type === 'event') {
+  //         const data = event.data;
 
-          if (data === '[DONE]') {
-            controller.close();
-            return;
-          }
+  //         if (data === '[DONE]') {
+  //           controller.close();
+  //           return;
+  //         }
 
-          try {
-            const json = JSON.parse(data);
-            const text = json.choices[0].delta.content;
-            const queue = encoder.encode(text);
-            controller.enqueue(queue);
-          } catch (e) {
-            controller.error(e);
-          }
-        }
-      };
+  //         try {
+  //           const json = JSON.parse(data);
+  //           const text = json.choices[0].delta.content;
+  //           const queue = encoder.encode(text);
+  //           controller.enqueue(queue);
+  //         } catch (e) {
+  //           controller.error(e);
+  //         }
+  //       }
+  //     };
 
-      const parser = createParser(onParse);
+  //     const parser = createParser(onParse);
 
-      for await (const chunk of res.body as any) {
-        parser.feed(decoder.decode(chunk));
-      }
-    },
-  });
+  //     for await (const chunk of res.body as any) {
+  //       parser.feed(decoder.decode(chunk));
+  //     }
+  //   },
+  // });
 
-  return stream;
+  // return stream;
 };
